@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">surrounding-scanner</string>
+    <string name="button_main">Button</string>
+    <string name="capture">Capture</string>
 </resources>
