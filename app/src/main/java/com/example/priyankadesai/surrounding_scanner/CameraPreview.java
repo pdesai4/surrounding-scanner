@@ -7,6 +7,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.io.IOException;
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -14,6 +15,8 @@ import static android.content.ContentValues.TAG;
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder mHolder;
     private Camera mCamera;
+    private List<Camera.Size> mSupportedPreviewSizes;
+    private Camera.Size mPreviewSize;
 
     public CameraPreview(Context context) {
         super(context);
@@ -22,6 +25,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public CameraPreview(Context context, Camera camera) {
         super(context);
         mCamera = camera;
+        mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
+        for (Camera.Size str : mSupportedPreviewSizes) {
+            Log.e(TAG, str.width + "/" + str.height);
+        }
 
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
@@ -33,6 +40,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         // The Surface has been created, now tell the camera where to draw the preview.
         try {
             mCamera.setPreviewDisplay(holder);
+            mCamera.setDisplayOrientation(90);
             mCamera.startPreview();
         } catch (IOException e) {
             Log.d(TAG, "Error setting camera preview: " + e.getMessage());
@@ -70,5 +78,61 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         } catch (Exception e) {
             Log.d(TAG, "Error starting camera preview: " + e.getMessage());
         }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        final int width = resolveSize(getSuggestedMinimumWidth(), widthMeasureSpec);
+        final int height = resolveSize(getSuggestedMinimumHeight(), heightMeasureSpec);
+
+        if (mSupportedPreviewSizes != null) {
+            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
+        }
+
+        if (mPreviewSize != null) {
+            float ratio;
+            if (mPreviewSize.height >= mPreviewSize.width)
+                ratio = (float) mPreviewSize.height / (float) mPreviewSize.width;
+            else
+                ratio = (float) mPreviewSize.width / (float) mPreviewSize.height;
+
+            // One of these methods should be used, second method squishes preview slightly
+            setMeasuredDimension(width, (int) (width * ratio));
+            //        setMeasuredDimension((int) (width * ratio), height);
+        }
+    }
+
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) h / w;
+
+        if (sizes == null)
+            return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.height / size.width;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+                continue;
+
+            if (Math.abs(size.height - h) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - h);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - h) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - h);
+                }
+            }
+        }
+
+        return optimalSize;
     }
 }

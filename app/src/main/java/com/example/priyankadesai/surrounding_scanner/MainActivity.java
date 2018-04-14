@@ -34,12 +34,15 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted
-                    Intent intent = new Intent(this, CameraActivity.class);
-                    startActivity(intent);
-
+                    launchCamera();
                 }
             }
         }
+    }
+
+    private void launchCamera() {
+        Intent intent = new Intent(this, CameraActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -54,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA},
                     MY_PERMISSIONS_REQUEST_CAMERA);
+        } else {
+            launchCamera();
         }
     }
 
