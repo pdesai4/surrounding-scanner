@@ -96,9 +96,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             else
                 ratio = (float) mPreviewSize.width / (float) mPreviewSize.height;
 
-            // One of these methods should be used, second method squishes preview slightly
             setMeasuredDimension(width, (int) (width * ratio));
-            //        setMeasuredDimension((int) (width * ratio), height);
         }
     }
 

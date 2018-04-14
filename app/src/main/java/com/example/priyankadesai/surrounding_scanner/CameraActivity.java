@@ -1,6 +1,7 @@
 package com.example.priyankadesai.surrounding_scanner;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ public class CameraActivity extends Activity {
     public static final int MEDIA_TYPE_IMAGE = 1;
 
     private static final String TAG = CameraActivity.class.getName();
+    private boolean imageCaptured;
     private Camera mCamera;
     private Camera.PictureCallback mPictureCallback;
 
@@ -30,6 +32,7 @@ public class CameraActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
+        imageCaptured = false;
         // Create an instance of Camera
         mCamera = getCameraInstance();
 
@@ -47,6 +50,7 @@ public class CameraActivity extends Activity {
                     Log.d(TAG, "Error creating media file, check storage permissions");
                     return;
                 }
+                imageCaptured = true;
                 try {
                     FileOutputStream fos = new FileOutputStream(pictureFile);
                     fos.write(data);
@@ -135,6 +139,18 @@ public class CameraActivity extends Activity {
         }
 
         return mediaFile;
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent;
+        if(!imageCaptured) {
+            intent = new Intent(this, MainActivity.class);
+        } else {
+            intent =new Intent(this, CameraActivity.class);
+        }
+        startActivity(intent);
     }
 
 }
