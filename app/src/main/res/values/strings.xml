@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">surrounding-scanner</string>
-    <string name="button_main">Button</string>
+    <string name="app_name">Surrounding Scanner</string>
+    <string name="button_main">Start Scanner</string>
     <string name="capture">Capture</string>
 </resources>
