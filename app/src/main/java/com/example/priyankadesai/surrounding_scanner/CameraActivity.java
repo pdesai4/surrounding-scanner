@@ -71,6 +71,7 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
 
             @Override
             public void onPictureTaken(byte[] data, Camera camera) {
+                mCamera.startPreview();
                 File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
                 if (pictureFile == null) {
                     Log.e(TAG, "Error creating media file, check storage permissions");
@@ -127,6 +128,12 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         try {
             // attempt to get a Camera instance
             camera = Camera.open();
+            Camera.Parameters parameters = camera.getParameters();
+            if (parameters.getSupportedFocusModes().contains(
+                    Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+                camera.setParameters(parameters);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Camera.open() failed", e);
         }
@@ -249,7 +256,7 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         Log.d(TAG, String.valueOf(objectsToRead));
         if (textToSpeechInitialised) {
             for (String string : objectsToRead) {
-                textToSpeech.speak(string, TextToSpeech.QUEUE_FLUSH, null);
+                textToSpeech.speak(string, TextToSpeech.QUEUE_ADD, null);
             }
         }
     }
