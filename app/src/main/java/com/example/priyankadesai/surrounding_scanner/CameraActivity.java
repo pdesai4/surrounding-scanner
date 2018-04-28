@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.util.Base64;
 import android.util.Log;
@@ -22,7 +23,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import okhttp3.Call;
@@ -33,21 +36,27 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class CameraActivity extends Activity {
+public class CameraActivity extends Activity implements TextToSpeech.OnInitListener {
 
     public static final int MEDIA_TYPE_IMAGE = 1;
 
     private static final String TAG = CameraActivity.class.getName();
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String API_KEY = "XXXX";
+    private static final double SCORE_THRESHOLD = 0.8;
     private OkHttpClient mOkHttpClient;
     private Camera mCamera;
     private Camera.PictureCallback mPictureCallback;
+    private TextToSpeech textToSpeech;
+    private boolean textToSpeechInitialised;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+
+        textToSpeech = new TextToSpeech(this, this);
+        textToSpeechInitialised = false;
 
         // Create an instance of Camera
         mCamera = getCameraInstance();
@@ -94,6 +103,15 @@ public class CameraActivity extends Activity {
         super.onPause();
         // release the camera immediately on pause event
         releaseCamera();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
     }
 
     private void releaseCamera() {
@@ -164,7 +182,7 @@ public class CameraActivity extends Activity {
             JSONArray jsonArrayFeatures = new JSONArray();
             JSONObject jsonObjectFeature = new JSONObject();
             jsonObjectFeature.put("type", "LABEL_DETECTION");
-            jsonObjectFeature.put("maxResults", "1");
+            jsonObjectFeature.put("maxResults", "5");
             jsonArrayFeatures.put(jsonObjectFeature);
 
             jsonObjectRequest.put("image", jsonObjectImage);
@@ -193,8 +211,57 @@ public class CameraActivity extends Activity {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 Log.d(TAG, "Response code: " + response.code());
-                Log.d(TAG, "Response: " + response.body().string());
+                List<String> objectsToRead = new ArrayList<>();
+                if (response.body() != null) {
+                    try {
+                        @SuppressWarnings("ConstantConditions")
+                        JSONObject jsonObjectResponse = new JSONObject(response.body().string());
+                        Log.d(TAG, "Response body: " + jsonObjectResponse.toString());
+                        if (jsonObjectResponse.has("responses")) {
+                            JSONArray responses = jsonObjectResponse.getJSONArray("responses");
+                            for (int i = 0; i < responses.length(); i++) {
+                                JSONObject jsonObject = responses.getJSONObject(i);
+                                if (jsonObject.has("labelAnnotations")) {
+                                    JSONArray labelAnnotations = jsonObject.getJSONArray("labelAnnotations");
+                                    for (int j = 0; j < labelAnnotations.length(); j++) {
+                                        JSONObject labelAnnotation = labelAnnotations.getJSONObject(j);
+                                        if (labelAnnotation.has("description") && labelAnnotation.has("score")) {
+                                            double score = labelAnnotation.getDouble("score");
+                                            if (score >= SCORE_THRESHOLD) {
+                                                objectsToRead.add(labelAnnotation.getString("description"));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Log.e(TAG, "Error parsing response json", e);
+                    }
+                }
+                readOutLoud(objectsToRead);
             }
         });
+    }
+
+    private void readOutLoud(List<String> objectsToRead) {
+        Log.d(TAG, String.valueOf(objectsToRead));
+        if (textToSpeechInitialised) {
+            for (String string : objectsToRead) {
+                textToSpeech.speak(string, TextToSpeech.QUEUE_FLUSH, null);
+            }
+        }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = textToSpeech.setLanguage(Locale.US);
+            // textToSpeech.setPitch(5); // set pitch level
+            // textToSpeech.setSpeechRate(2); // set speech speed rate
+            textToSpeechInitialised = (result != TextToSpeech.LANG_MISSING_DATA
+                    && result != TextToSpeech.LANG_NOT_SUPPORTED);
+        }
     }
 }
