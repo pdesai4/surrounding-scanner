@@ -28,6 +28,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Check whether the device supports the camera feature
+     *
+     * @return Returns true if the devices supports the camera feature, else false
+     */
     private boolean checkCameraHardware() {
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
     }
@@ -51,17 +56,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Request permission for camera and external storage and launch the camera when the permissions
+     * are granted
+     */
     private void launchCamera() {
+        // Check for camera permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
+            // Request for permission
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA},
                     MY_PERMISSIONS_REQUEST_CAMERA);
             return;
         }
+        // Check for external data storage permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
+            // Request for permission
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL);
@@ -71,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
         startCameraActivity();
     }
 
+    /**
+     * Start the camera activity
+     */
     private void startCameraActivity() {
         Intent intent = new Intent(this, CameraActivity.class);
         startActivity(intent);

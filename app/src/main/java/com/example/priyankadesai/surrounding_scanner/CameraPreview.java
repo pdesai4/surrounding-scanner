@@ -1,5 +1,6 @@
 package com.example.priyankadesai.surrounding_scanner;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.hardware.Camera;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.SurfaceView;
 import java.util.List;
 
 
+@SuppressLint("ViewConstructor")
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = "CameraPreview";
 
@@ -87,12 +89,18 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             else
                 ratio = (float) mPreviewSize.width / (float) mPreviewSize.height;
 
-            // One of these methods should be used, second method squishes preview slightly
             setMeasuredDimension(width, (int) (width * ratio));
-            // setMeasuredDimension((int) (width * ratio), height);
         }
     }
 
+    /**
+     * Get the optimal size of the camera preview
+     *
+     * @param sizes List of sizes
+     * @param w     Width of the preview
+     * @param h     Height of the preview
+     * @return Optimal size of the preview
+     */
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
         final double ASPECT_TOLERANCE = 0.1;
         double targetRatio = (double) h / w;

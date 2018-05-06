@@ -66,9 +66,10 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         camera = getCameraInstance();
         OkHttpClient = new OkHttpClient();
 
+        // Application specific cache directory
         cacheDir = getCacheDir();
 
-        // Create our Preview view and set it as the content of our activity.
+        // Create Preview view and set it as the content of our activity
         CameraPreview cameraPreview = new CameraPreview(this, camera);
         FrameLayout frameLayoutPreview = findViewById(R.id.camera_preview);
         frameLayoutPreview.addView(cameraPreview);
@@ -95,6 +96,7 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
             }
         };
 
+        // Take picture after every specified time interval
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -121,6 +123,9 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         }
     }
 
+    /**
+     * Release thr camera resource
+     */
     private void releaseCamera() {
         if (camera != null) {
             // release the camera for other applications
@@ -129,12 +134,18 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         }
     }
 
+    /**
+     * Get instance of the camera resource
+     *
+     * @return Returns camera instance or null if camera is not available
+     */
     public Camera getCameraInstance() {
         Camera camera = null;
         try {
-            // attempt to get a Camera instance
+            // Attempt to get a Camera instance
             camera = Camera.open();
             Camera.Parameters parameters = camera.getParameters();
+            // Enable auto focus
             if (parameters.getSupportedFocusModes().contains(
                     Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
@@ -161,7 +172,13 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         return null;
     }
 
+    /**
+     * Send the image file data to Vision API for image analysis
+     *
+     * @param fileUri Absolute path of the image file
+     */
     private void sendImageToCloud(String fileUri) {
+        // Convert the image into encoded String
         Bitmap bitmap = BitmapFactory.decodeFile(fileUri);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
@@ -243,6 +260,11 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         });
     }
 
+    /**
+     * Read the given String aloud using the TTS
+     *
+     * @param text String data to read
+     */
     private void readOutLoud(final String text) {
         Log.d(TAG, text);
         if (textToSpeechInitialised) {
@@ -264,12 +286,6 @@ public class CameraActivity extends Activity implements TextToSpeech.OnInitListe
         if (status == TextToSpeech.SUCCESS) {
             // Set language
             int result = textToSpeech.setLanguage(Locale.US);
-
-            // Set pitch level
-            // textToSpeech.setPitch(5);
-
-            // Set speech speed rate
-            // textToSpeech.setSpeechRate(2);
 
             // Check if initialised successfully
             textToSpeechInitialised = (result != TextToSpeech.LANG_MISSING_DATA
